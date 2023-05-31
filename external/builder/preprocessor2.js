@@ -322,26 +322,40 @@ function traverseTree(ctx, node) {
 }
 
 function preprocessPDFJSCode(ctx, code) {
+  const saveComments = !!ctx.saveComments;
   const format = ctx.format || {
     indent: {
       style: " ",
+      adjustMultilineComment: saveComments,
     },
   };
+  const tokens = []
+  const comments = [];
   const parseOptions = {
     ecmaVersion: ACORN_ECMA_VERSION,
     locations: true,
+    ranges: true,
     sourceFile: ctx.sourceFile,
     sourceType: "module",
+    onToken: saveComments ? tokens : null,
+    onComment: saveComments ? comments : null,
   };
   const codegenOptions = {
     format,
+    comment: saveComments,
     parse(input) {
       return acorn.parse(input, { ecmaVersion: ACORN_ECMA_VERSION });
     },
-    sourceMap: ctx.sourceMap,
+    file: ctx.sourceMap ? ctx.sourceFile : undefined,
+    sourceContent: ctx.sourceMap ? code : undefined,
+    sourceMap: ctx.sourceMap ? ctx.sourceFile : undefined,
+    sourceMapRoot: ctx.sourceMap ? ctx.rootPath : null,
     sourceMapWithCode: ctx.sourceMap,
   };
   const syntax = acorn.parse(code, parseOptions);
+  if (saveComments) {
+    escodegen.attachComments(syntax, comments, tokens);
+  }
   traverseTree(ctx, syntax);
   return escodegen.generate(syntax, codegenOptions);
 }
