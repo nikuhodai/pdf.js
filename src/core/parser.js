@@ -1049,6 +1049,7 @@ class Lexer {
         ch = this.nextChar();
       }
     }
+    this.lastStringType = 'normal';
     return strBuf.join("");
   }
 
@@ -1157,6 +1158,7 @@ class Lexer {
         ch = this.nextChar();
       }
     }
+    this.lastStringType = 'hex';
     return strBuf.join("");
   }
 
